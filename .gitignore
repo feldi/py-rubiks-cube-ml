@@ -1,0 +1,14 @@
+.idea
+.vscode
+.pytest_cache
+runs
+saves
+output
+*.png
+.ipynb_checkpoints
+*.log
+env
+c2x2*
+c3x3*
+**/__pycache__
+models
