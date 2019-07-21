@@ -133,7 +133,7 @@ if __name__ == "__main__":
                 best_loss = m_loss
             elif best_loss > m_loss:
                 name = os.path.join(save_path, "best_%.4e.txt" % m_loss)
-                torch.save(net.state_dict(), name)
+                # torch.save(net.state_dict(), name)
                 name_best_so_far = os.path.join(save_path, "best_so_far.txt")
                 torch.save(net.state_dict(), name_best_so_far)
                 best_loss = m_loss

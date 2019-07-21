@@ -123,6 +123,7 @@ def solve_task(env, task, net, cube_idx=None, max_seconds=DEFAULT_MAX_SECONDS, m
                device=torch.device("cpu"), quiet=False, batch_size=1):
     if not quiet:
         log_prefix = "" if cube_idx is None else "cube %d: " % cube_idx
+        log.info("---------------------------------")
         log.info("%sGot task %s, solving...", log_prefix, env.render_action_list(task))
     cube_state = env.scramble(map(env.action_enum, task))
     tree = mcts.MCTS(env, cube_state, net, device=device)
@@ -137,7 +138,7 @@ def solve_task(env, task, net, cube_idx=None, max_seconds=DEFAULT_MAX_SECONDS, m
         if solution:
             if not quiet:
                 log.info("On step %d we found goal state, unroll. Speed %.2f searches/s",
-                         step_no, (step_no*batch_size) / (time.time() - ts))
+                         step_no, (step_no*batch_size) / (time.time() - ts + 1))
                 log.info("Tree depths: %s", tree.get_depth_stats())
                 bfs_solution = tree.find_solution()
                 log.info("Solutions: naive %d, bfs %d", len(solution), len(bfs_solution))
