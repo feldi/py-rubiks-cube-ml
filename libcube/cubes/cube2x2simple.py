@@ -169,6 +169,27 @@ def to_action(form):
 
     return None
 
+def parse_cycles(form):
+    cyc = ()
+    token = ''
+    flip = 0
+    for ch in form:
+        if ch == '(':
+            token = ''
+            flip = 0 
+        elif ch == ')':
+            handle_token(token)
+        elif ch == '+':
+            flip = 1
+        elif ch == '-':
+            flip = 2
+        else:
+            token += ch
+
+    return cyc
+
+def handle_token(token):
+    return None
 
 encoded_shape = (7, 24)
 
