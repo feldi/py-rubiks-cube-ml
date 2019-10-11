@@ -124,7 +124,7 @@ def solve_task(env, task, net, cube_idx=None, max_seconds=DEFAULT_MAX_SECONDS, m
     if not quiet:
         log_prefix = "" if cube_idx is None else "cube %d: " % cube_idx
         log.info("---------------------------------")
-        log.info("%sGot task %s, solving...", log_prefix, env.render_action_list(task))
+        log.info("%sGot task %s, trying to solve...", log_prefix, env.render_action_list(task))
     cube_state = env.scramble(map(env.action_enum, task))
     tree = mcts.MCTS(env, cube_state, net, device=device)
     step_no = 0
@@ -137,15 +137,13 @@ def solve_task(env, task, net, cube_idx=None, max_seconds=DEFAULT_MAX_SECONDS, m
             solution = tree.search()
         if solution:
             if not quiet:
-                log.info("On step %d we found goal state, unroll. Speed %.2f searches/s",
+                log.info("Solved on step %d. Speed %.2f searches/sec",
                          step_no, (step_no*batch_size) / (time.time() - ts + 1))
                 log.info("Tree depths: %s", tree.get_depth_stats())
                 bfs_solution = tree.find_solution()
-                log.info("Solutions: naive %d, bfs %d", len(solution), len(bfs_solution))
-                # log.info("BFS: %s", bfs_solution)
+                log.info("Solution lengths: Naive %d, BFS %d", len(solution), len(bfs_solution))
                 soln_bfs = env.render_action_list(bfs_solution)
                 log.info("BFS: %s", soln_bfs)
-                # log.info("Naive: %s", solution)
                 soln_naive = env.render_action_list(solution)
                 log.info("Naive: %s", soln_naive)
 #                tree.dump_solution(solution)
@@ -157,14 +155,14 @@ def solve_task(env, task, net, cube_idx=None, max_seconds=DEFAULT_MAX_SECONDS, m
         if max_steps is not None:
             if step_no > max_steps:
                 if not quiet:
-                    log.info("Maximum amount of steps has reached, cube wasn't solved. "
-                             "Did %d searches, speed %.2f searches/s",
+                    log.info("Maximum amount of steps reached, cube wasn't solved. "
+                             "Did %d searches, speed %.2f searches/sec",
                              step_no, (step_no*batch_size) / (time.time() - ts))
                     log.info("Tree depths: %s", tree.get_depth_stats())
                 return tree, None
         elif time.time() - ts > max_seconds:
             if not quiet:
-                log.info("Time is up, cube wasn't solved. Did %d searches, speed %.2f searches/s..",
+                log.info("Time is up, cube wasn't solved. Did %d searches, speed %.2f searches/sec",
                          step_no, (step_no*batch_size) / (time.time() - ts))
                 log.info("Tree depths: %s", tree.get_depth_stats())
             return tree, None
@@ -235,7 +233,6 @@ if __name__ == "__main__":
         solve_task(cube_env, task, net, max_seconds=args.max_time, max_steps=args.max_steps, device=device,
                    batch_size=args.batch)
     elif args.perm is not None:
-        ## task = list(map(int, args.perm.split(',')))
         task = list(map(cube_env.to_action, args.perm.split(',')))
         solve_task(cube_env, task, net, max_seconds=args.max_time, max_steps=args.max_steps, device=device,
                    batch_size=args.batch)
@@ -245,9 +242,8 @@ if __name__ == "__main__":
         solved = 0
         with open(args.input, 'rt', encoding='utf-8') as fd:
             for idx, l in enumerate(fd):
-                ##task = list(map(int, l.strip().split(',')))
                 task = list(map(cube_env.to_action, l.strip().split(',')))
-                _, solution  = solve_task(cube_env, task, net, cube_idx=idx, max_seconds=args.max_time,
+                _, solution  = solve_task(cube_env, task, net, cube_idx=idx + 1, max_seconds=args.max_time,
                                           max_steps=args.max_steps, device=device, batch_size=args.batch)
                 if solution is not None:
                     solved += 1

@@ -50,13 +50,15 @@ if __name__ == "__main__":
     buf_policy_loss, buf_value_loss, buf_loss = [], [], []
     buf_policy_loss_raw, buf_value_loss_raw, buf_loss_raw = [], [], []
     buf_mean_values = []
-    ts = time.time()
     best_loss = None
 
     log.info("Generate scramble buffer...")
-    scramble_buf = collections.deque(maxlen=config.scramble_buffer_batches*config.train_batch_size)
-    scramble_buf.extend(model.make_scramble_buffer(cube_env, config.train_batch_size*2, config.train_scramble_depth))
+    scramble_buf = collections.deque(maxlen=config.scramble_buffer_batches*config.train_batch_size*2)
+
+    scramble_buf.extend(model.make_scramble_buffer(cube_env, config.train_batch_size, config.train_scramble_depth))
     log.info("Generated buffer of size %d", len(scramble_buf))
+
+    ts = time.time()
 
     while True:
         if config.train_lr_decay_enabled and step_idx % config.train_lr_decay_batches == 0:
@@ -116,7 +118,7 @@ if __name__ == "__main__":
             dt = time.time() - ts
             ts = time.time()
             speed = config.train_batch_size * config.train_report_batches / dt
-            log.info("%d: p_loss=%.3e, v_loss=%.3e, loss=%.3e, speed=%.1f cubes/s",
+            log.info("%d: p_loss=%.3e, v_loss=%.3e, loss=%.3e, speed=%.1f cubes/sec",
                      step_idx, m_policy_loss, m_value_loss, m_loss, speed)
             sum_train_data = 0.0
             sum_opt = 0.0
@@ -142,6 +144,7 @@ if __name__ == "__main__":
             scramble_buf.extend(model.make_scramble_buffer(cube_env, config.train_batch_size,
                                                            config.train_scramble_depth))
             log.info("Pushed new data in scramble buffer, new size = %d", len(scramble_buf))
+            ts = time.time()
 
         if config.train_checkpoint_batches is not None and step_idx % config.train_checkpoint_batches == 0:
             name = os.path.join(save_path, "chpt_%06d.dat" % step_idx)

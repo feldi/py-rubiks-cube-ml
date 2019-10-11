@@ -8,6 +8,20 @@ import torch.nn as nn
 
 from . import cubes
 
+# HIDDEN_SIZE_BODY_IN    = 4096
+# HIDDEN_SIZE_BODY_OUT   = 2048
+# HIDDEN_SIZE_POLICY_IN  = 2048
+# HIDDEN_SIZE_POLICY_OUT = 512
+# HIDDEN_SIZE_VALUE_IN  =  2048
+# HIDDEN_SIZE_VALUE_OUT =  512
+
+HIDDEN_SIZE_BODY_IN    = 2048 # 4096
+HIDDEN_SIZE_BODY_OUT   = 1024 # 2048
+HIDDEN_SIZE_POLICY_IN  = 1024 # 2048
+HIDDEN_SIZE_POLICY_OUT =  256 # 512
+HIDDEN_SIZE_VALUE_IN  = 1024 # 2048
+HIDDEN_SIZE_VALUE_OUT =  256 # 512
+
 
 class Net(nn.Module):
     def __init__(self, input_shape, actions_count):
@@ -15,20 +29,20 @@ class Net(nn.Module):
 
         self.input_size = int(np.prod(input_shape))
         self.body = nn.Sequential(
-            nn.Linear(self.input_size, 4096),
+            nn.Linear(self.input_size, HIDDEN_SIZE_BODY_IN),
             nn.ELU(),
-            nn.Linear(4096, 2048),
+            nn.Linear(HIDDEN_SIZE_BODY_IN, HIDDEN_SIZE_BODY_OUT),
             nn.ELU()
         )
         self.policy = nn.Sequential(
-            nn.Linear(2048, 512),
+            nn.Linear(HIDDEN_SIZE_POLICY_IN, HIDDEN_SIZE_POLICY_OUT),
             nn.ELU(),
-            nn.Linear(512, actions_count)
+            nn.Linear(HIDDEN_SIZE_POLICY_OUT, actions_count)
         )
         self.value = nn.Sequential(
-            nn.Linear(2048, 512),
+            nn.Linear(HIDDEN_SIZE_VALUE_IN, HIDDEN_SIZE_VALUE_OUT),
             nn.ELU(),
-            nn.Linear(512, 1)
+            nn.Linear(HIDDEN_SIZE_VALUE_OUT, 1)
         )
 
     def forward(self, batch, value_only=False):
