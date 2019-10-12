@@ -140,7 +140,7 @@ def sample_batch(scramble_buffer, net, device, batch_size, value_targets):
     else:
         assert False, "Unsupported method of value targets"
 
-    # train input
+    # create training input
     enc_input = np.stack(states)
     enc_input_t = torch.tensor(enc_input).to(device)
     depths_t = torch.tensor(depths, dtype=torch.float32).to(device)
@@ -195,7 +195,7 @@ def make_train_data(cube_env, net, device, batch_size, scramble_depth, shuffle=F
     else:
         assert False, "Unsupported method of value targets"
 
-    # create train input
+    # create training input
     enc_input = encode_states(cube_env, cube_states)
     enc_input_t = torch.tensor(enc_input).to(device)
     cube_depths_t = torch.tensor(cube_depths, dtype=torch.float32).to(device)

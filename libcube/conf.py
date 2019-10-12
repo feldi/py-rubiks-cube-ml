@@ -74,8 +74,8 @@ class Config:
         return self.sect_train.get('value_targets_method', fallback='paper')
 
     @property
-    def train_max_batches(self):
-        return self.sect_train.getint('max_batches')
+    def train_max_steps(self):
+        return self.sect_train.getint('max_steps')
 
     @property
     def scramble_buffer_batches(self):

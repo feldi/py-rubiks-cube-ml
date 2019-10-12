@@ -19,7 +19,7 @@ from libcube import conf
 
 log = logging.getLogger("train")
 
-# python train.py -i ini/cube2x2-zero-goal-d200.ini -n peter1
+# python train.py -i ini/cube2x2-zero-goal-d200.ini -n model1a
 
 
 if __name__ == "__main__":
@@ -53,9 +53,9 @@ if __name__ == "__main__":
     best_loss = None
 
     log.info("Generate scramble buffer...")
-    scramble_buf = collections.deque(maxlen=config.scramble_buffer_batches*config.train_batch_size*2)
+    scramble_buf = collections.deque(maxlen=config.scramble_buffer_batches * config.train_batch_size * 2)
 
-    scramble_buf.extend(model.make_scramble_buffer(cube_env, config.train_batch_size, config.train_scramble_depth))
+    scramble_buf.extend(model.make_scramble_buffer(cube_env, config.train_batch_size * 2, config.train_scramble_depth))
     log.info("Generated buffer of size %d", len(scramble_buf))
 
     ts = time.time()
@@ -67,13 +67,27 @@ if __name__ == "__main__":
             writer.add_scalar("lr", sched.get_lr()[0], step_idx)
 
         step_idx += 1
+
+        # generate data to train upon
+
         x_t, weights_t, y_policy_t, y_value_t = model.sample_batch(
             scramble_buf, net, device, config.train_batch_size, value_targets_method)
 
+        # do training step
+
         opt.zero_grad()
         policy_out_t, value_out_t = net(x_t)
+
+        # print("Values: ")
+        # print(value_out_t)
+      
         value_out_t = value_out_t.squeeze(-1)
+        # print(len(value_out_t))
+        # print(value_out_t)
         value_loss_t = (value_out_t - y_value_t)**2
+        # print("Value loss: ")
+        # print(value_loss_t)
+
         value_loss_raw_t = value_loss_t.mean()
         if config.weight_samples:
             value_loss_t *= weights_t
@@ -118,7 +132,7 @@ if __name__ == "__main__":
             dt = time.time() - ts
             ts = time.time()
             speed = config.train_batch_size * config.train_report_batches / dt
-            log.info("%d: p_loss=%.3e, v_loss=%.3e, loss=%.3e, speed=%.1f cubes/sec",
+            log.info("Step %d: p_loss=%.3e, v_loss=%.3e, loss=%.3e, speed=%.1f cubes/sec",
                      step_idx, m_policy_loss, m_value_loss, m_loss, speed)
             sum_train_data = 0.0
             sum_opt = 0.0
@@ -134,13 +148,21 @@ if __name__ == "__main__":
             if best_loss is None:
                 best_loss = m_loss
             elif best_loss > m_loss:
-                name = os.path.join(save_path, "best_%.4e.txt" % m_loss)
+                # name = os.path.join(save_path, "best_%.4e.txt" % m_loss)
                 # torch.save(net.state_dict(), name)
                 name_best_so_far = os.path.join(save_path, "best_so_far.txt")
                 torch.save(net.state_dict(), name_best_so_far)
                 best_loss = m_loss
 
         if step_idx % config.push_scramble_buffer_iters == 0:
+            scramble_buf.clear()
+            log.info("Cleared data in scramble buffer")
+            scramble_buf.extend(model.make_scramble_buffer(cube_env, config.train_batch_size * 2,
+                                                           config.train_scramble_depth))
+            log.info("Pushed new data in scramble buffer, new size = %d", len(scramble_buf))
+            ts = time.time()
+
+        elif step_idx % config.scramble_buffer_batches == 0:
             scramble_buf.extend(model.make_scramble_buffer(cube_env, config.train_batch_size,
                                                            config.train_scramble_depth))
             log.info("Pushed new data in scramble buffer, new size = %d", len(scramble_buf))
@@ -150,8 +172,8 @@ if __name__ == "__main__":
             name = os.path.join(save_path, "chpt_%06d.dat" % step_idx)
             torch.save(net.state_dict(), name)
 
-        if config.train_max_batches is not None and config.train_max_batches <= step_idx:
-            log.info("Limit of train batches reached, exiting")
+        if config.train_max_steps is not None and step_idx > config.train_max_steps:
+            log.info("Limit of train steps reached, exiting")
             break
 
     writer.close()
