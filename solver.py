@@ -24,12 +24,10 @@ from libcube import mcts
 
 log = logging.getLogger("solver")
 
-
 DataPoint = collections.namedtuple("DataPoint", field_names=(
     'start_dt', 'stop_dt', 'duration', 'depth', 'scramble', 'is_solved', 'solve_steps', 'sol_len_naive', 'sol_len_bfs',
     'depth_max', 'depth_mean', 'soln_naive', 'soln_bfs'
 ))
-
 
 DEFAULT_MAX_SECONDS = 60
 PLOT_MAX_DEPTHS = 50
@@ -77,7 +75,7 @@ def gather_data(cube_env, net, max_seconds, max_steps, max_depth, samples_per_de
                 sol_len_naive, sol_len_bfs = -1, -1
                 if is_solved:
                     sol_len_naive = len(solution)
-                    solution_bfs = tree.find_solution()
+                    solution_bfs = tree.find_bfs_solution()
                     sol_len_bfs = len(solution_bfs)
                     soln_bfs = ",".join(map(lambda x: cube_env.render_action(cube_env.action_enum(x)), solution_bfs))
                     
@@ -140,7 +138,7 @@ def solve_task(env, task, net, cube_idx=None, max_seconds=DEFAULT_MAX_SECONDS, m
                 log.info("Solved on step %d. Speed %.2f searches/sec",
                          step_no, (step_no*batch_size) / (time.time() - ts + 1))
                 log.info("Tree depths: %s", tree.get_depth_stats())
-                bfs_solution = tree.find_solution()
+                bfs_solution = tree.find_bfs_solution()
                 log.info("Solution lengths: Naive %d, BFS %d", len(solution), len(bfs_solution))
                 soln_bfs = env.render_action_list(bfs_solution)
                 log.info("BFS: %s", soln_bfs)
@@ -152,6 +150,10 @@ def solve_task(env, task, net, cube_idx=None, max_seconds=DEFAULT_MAX_SECONDS, m
 #                log.info("Tree: %s", tree)
             return tree, solution
         step_no += 1
+
+        if step_no % 1000 == 0:
+            log.info("Step %d of max %d", step_no, max_steps)
+
         if max_steps is not None:
             if step_no > max_steps:
                 if not quiet:

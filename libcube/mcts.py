@@ -1,6 +1,7 @@
 import random
 import numpy as np
 import collections
+import logging
 
 from . import cubes
 from . import model
@@ -8,12 +9,13 @@ from . import model
 import torch
 import torch.nn.functional as F
 
+log = logging.getLogger("mcts")
 
 class MCTS:
     """
     Monte Carlo Tree Search state and method
     """
-    def __init__(self, cube_env, state, net, exploration_c=100, virt_loss_nu=100.0, device="cpu"):
+    def __init__(self, cube_env, state, net, exploration_c=100, virt_loss_ny=100.0, device="cpu"):
         assert isinstance(cube_env, cubes.CubeEnv)
         assert cube_env.is_state(state)
 
@@ -21,7 +23,7 @@ class MCTS:
         self.root_state = state
         self.net = net
         self.exploration_c = exploration_c
-        self.virt_loss_nu = virt_loss_nu
+        self.virt_loss_ny = virt_loss_ny
         self.device = device
 
         # Tree state
@@ -72,6 +74,7 @@ class MCTS:
         print("Action: %s" % act)
 
     def search(self):
+        # log.info("Search called")
         s, path_actions, path_states = self._search_leaf()
 
         child_states, child_goal = self.cube_env.explore_state(s)
@@ -104,12 +107,14 @@ class MCTS:
             N_sqrt = np.sqrt(np.sum(act_counts))
             if N_sqrt < 1e-6:
                 act = random.randrange(len(self.cube_env.action_enum))
+                # log.info("Choose random action")
             else:
+                # log.info("Choose action by values")
                 u = self.exploration_c * N_sqrt / (act_counts + 1)
                 u *= self.prob_actions[s]
                 q = self.val_maxes[s] - self.virt_loss[s]
                 act = np.argmax(u + q)
-            self.virt_loss[s][act] += self.virt_loss_nu
+            self.virt_loss[s][act] += self.virt_loss_ny
             path_actions.append(act)
             path_states.append(s)
             s = next_states[act]
@@ -137,7 +142,7 @@ class MCTS:
             self.act_counts[path_s][path_a] += 1
             w = self.val_maxes[path_s]
             w[path_a] = max(w[path_a], value)
-            self.virt_loss[path_s][path_a] -= self.virt_loss_nu
+            self.virt_loss[path_s][path_a] -= self.virt_loss_ny
 
     def search_batch(self, batch_size):
         """
@@ -223,7 +228,7 @@ class MCTS:
             r = self.cube_env.render(s)
             print(r)
 
-    def find_solution(self):
+    def find_bfs_solution(self):
         queue = collections.deque([(self.root_state, [])])
         seen = set()
 
