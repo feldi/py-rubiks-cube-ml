@@ -32,6 +32,8 @@ DataPoint = collections.namedtuple("DataPoint", field_names=(
 DEFAULT_MAX_SECONDS = 60
 PLOT_MAX_DEPTHS = 50
 PLOT_TASKS = 20
+# introduce max depth
+MAX_DEPTH=22
 
 
 def generate_task(env, depth):
