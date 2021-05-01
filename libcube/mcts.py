@@ -211,7 +211,7 @@ class MCTS:
                     q.append((ss, depth+1))
         return {
             'max': max_depth,
-            'mean': sum_depth / leaves_count,
+            'mean': round(sum_depth/leaves_count, 1),
             'leaves': leaves_count
         }
 

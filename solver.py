@@ -155,6 +155,7 @@ def solve_task(env, task, net, cube_idx=None, max_seconds=DEFAULT_MAX_SECONDS, m
 
         if step_no % 1000 == 0:
             log.info("Step %d of max %d", step_no, max_steps)
+            log.info("Tree depths: %s", tree.get_depth_stats())
 
         if max_steps is not None:
             if step_no > max_steps:

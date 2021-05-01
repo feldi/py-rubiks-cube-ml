@@ -63,7 +63,7 @@ if __name__ == "__main__":
     while True:
         if config.train_lr_decay_enabled and step_idx % config.train_lr_decay_batches == 0:
             sched.step()
-            log.info("LR decrease to %s", sched.get_lr()[0])
+            log.info("LR set(decreased) to %.7f", sched.get_lr()[0])
             writer.add_scalar("lr", sched.get_lr()[0], step_idx)
 
         step_idx += 1
@@ -132,7 +132,7 @@ if __name__ == "__main__":
             dt = time.time() - ts
             ts = time.time()
             speed = config.train_batch_size * config.train_report_batches / dt
-            log.info("Step %d: p_loss=%.3e, v_loss=%.3e, loss=%.3e, speed=%.1f cubes/sec",
+            log.info("Step %d: p_loss=%.5f, v_loss=%.5f, loss=%.5f, speed=%.2f cubes/sec",
                      step_idx, m_policy_loss, m_value_loss, m_loss, speed)
             sum_train_data = 0.0
             sum_opt = 0.0
@@ -159,13 +159,13 @@ if __name__ == "__main__":
             log.info("Cleared data in scramble buffer")
             scramble_buf.extend(model.make_scramble_buffer(cube_env, config.train_batch_size * 2,
                                                            config.train_scramble_depth))
-            log.info("Pushed new data in scramble buffer, new size = %d", len(scramble_buf))
+            log.info("Pushed new data in scramble buffer, new size is %d", len(scramble_buf))
             ts = time.time()
 
         elif step_idx % config.scramble_buffer_batches == 0:
             scramble_buf.extend(model.make_scramble_buffer(cube_env, config.train_batch_size,
                                                            config.train_scramble_depth))
-            log.info("Pushed new data in scramble buffer, new size = %d", len(scramble_buf))
+            log.info("Pushed new data in scramble buffer, new size is %d", len(scramble_buf))
             ts = time.time()
 
         if config.train_checkpoint_batches is not None and step_idx % config.train_checkpoint_batches == 0:
